@@ -1,0 +1,16 @@
+[Unit]
+Description=Operate USB indicator light
+DefaultDependencies=no
+After=final.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/opt/recorder/led-ctl.bash off
+ExecStop=/opt/recorder/led-ctl.bash off
+
+[Install]
+WantedBy=final.target
+WantedBy=shutdown.target reboot.target halt.target
+
+#
