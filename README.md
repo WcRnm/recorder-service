@@ -42,9 +42,3 @@ Become root. In /lib/systemd/system, change the default.target symlink:
 # ln -s multi-user.target default.target
 # systemctl daemon-reload
 ```
-
-## TODO
-
-- Upload recorded files to a designated share.
-- Limit the maximum number of pending uploads.
-- Limit the maximum record duration.
