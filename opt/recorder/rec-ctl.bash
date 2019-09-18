@@ -54,6 +54,18 @@ function stop_recording()
   if [[ "$FNAME" != "" ]]; then
     $LOG "stop:  '$FNAME'"
     killall arecord
+
+    FAIL=0
+    for job in `jobs -p`
+    do
+        $LOG "wait for job:$job"
+        wait $job || let "FAIL+=1"
+    done
+
+    if [ "$FAIL" != "0" ]; then
+      $LOG "wait fail ($FAIL)"
+    fi
+
     chmod a+rw "$REC_DIR/$FNAME.mp3"
     FNAME=""
   fi
@@ -62,7 +74,9 @@ function stop_recording()
   # TODO: if more than UP_MAX_FILES in upload, then delete the oldest file
 
   $LED $OFF
-  $LOG "\n|---- PRESS A KEY TO START RECORDING ----|\n"
+  $LOG "+----------------------------------------+"
+  $LOG "|---- PRESS A KEY TO START RECORDING ----|"
+  $LOG "+----------------------------------------+"
 }
 
 stop_recording
