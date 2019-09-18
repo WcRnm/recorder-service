@@ -17,17 +17,16 @@ LED=$RECHOME/led-ctl.bash
 
 source $RECHOME/rec-settings.conf
 
+# LED control colors
 ON=red
 OFF=green
 DISABLED=off
 
+FNAME=""
 escape_char=$(printf "\u1b")
 
-FNAME=""
+#--------------------------------------------------------
 
-mkdir -p $REC_DIR/upload
-
-$LOG "REC_DIR=$REC_DIR"
 
 function cleanup()
 {
@@ -46,7 +45,7 @@ function start_recording()
   $LOG "start: '$FNAME'"
   $LED $ON
 
-  arecord -D $MIC_DEV -f cd -c 2 -t raw | lame -r -b 128 - "$REC_DIR/$FNAME.mp3" &
+  arecord -D $MIC_DEV -f cd -c 2 -t raw | lame -r -b $MP4_BITRATE - "$REC_DIR/$FNAME.mp3" &
 }
 
 function stop_recording()
@@ -54,20 +53,65 @@ function stop_recording()
   if [[ "$FNAME" != "" ]]; then
     $LOG "stop:  '$FNAME'"
     killall arecord
-    chmod a+rw "$REC_DIR/$FNAME.mp3"
+
+    FAIL=0
+    for job in `jobs -p`
+    do
+        $LOG "wait for job:$job"
+        wait $job || let "FAIL+=1"
+    done
+
+    if [ "$FAIL" != "0" ]; then
+      $LOG "wait fail ($FAIL)"
+    fi
+
+    chmod a+rw "${REC_DIR}/$FNAME.mp3"
     FNAME=""
   fi
 
-  mv "$REC_DIR/*.mp3" "$UP_DIR/upload/*.mp3"
-  # TODO: if more than UP_MAX_FILES in upload, then delete the oldest file
-
   $LED $OFF
-  $LOG "\n|---- PRESS A KEY TO START RECORDING ----|\n"
 }
 
-stop_recording
+function upload_tasks()
+{
+  # Move the mp3 file to the upload directory.
+  mv -f "${REC_DIR}"/*.mp3 "${UP_DIR}"
 
-while read -rsn1 keypress; do
+  # Delete old recordings if there too many in the upload dir 
+  pushd "${UP_DIR}" >/dev/null
+    N=$((UP_MAX_FILES+1))
+    ls -tp | grep -v '/$' | tail -n +$N | xargs -I {} rm -- {}
+  popd >/dev/null
+}
+
+function message()
+{
+  $LOG "+----------------------------------------+"
+  if [ "$1" = "start" ]; then
+    $LOG "|     PRESS A KEY TO START RECORDING     |"
+  else
+    $LOG "|     PRESS A KEY TO STOP RECORDING      |"
+  fi
+  $LOG "+----------------------------------------+"
+}
+#--------------------------------------------------------
+
+# Log some current settings
+$LOG "VERSION           = $VERSION"
+$LOG "REC_DIR           = $REC_DIR"
+$LOG "UP_DIR            = $UP_DIR"
+$LOG "REC_MAX_DURATION  = $REC_MAX_DURATION"
+
+# Create directories if they don't exist
+mkdir -p $REC_DIR/upload
+mkdir -p $UP_DIR
+
+# Do the upload tasks. This is in case we had lost power during the last record session
+upload_tasks
+
+message start
+
+while read -rsn1 -t $REC_MAX_DURATION keypress; do
   if [[ $keypress == $escape_char ]]; then
     read -rsn2 keypress # read 2 more chars
   fi
@@ -75,9 +119,13 @@ while read -rsn1 keypress; do
   if [[ $recording = 0 ]]; then
     recording=1
     start_recording
+    sleep 0.5
+    message stop
   else
     recording=0
     stop_recording
+    upload_tasks
+    message start
   fi
 done
 

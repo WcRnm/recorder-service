@@ -20,6 +20,19 @@ if [[ x$1 = x ]]; then
    exit 0
 fi
 
+help()
+{
+      echo "Control the USB LED"
+      echo "  led-ctl.bash [color|state]"
+      echo "    Colors: red, green, blue, yellow, white"
+      echo 
+      echo "    States:"
+      echo "      off (default)"
+      echo "         aliases: poweroff, shutdown, halt, reboot, stop"
+      echo "      on (red)"
+      echo "         aliases: record"
+}
+
 case $1 in
    off|poweroff|shutdown|halt|reboot|stop)
       echo "#000000" > $LED
@@ -28,13 +41,19 @@ case $1 in
       echo "#ff0000" > $LED
       ;;
    green)
-      echo "#00ff00" > $LED
+      echo "#008000" > $LED
       ;;
    blue)
       echo "#0000ff" > $LED
       ;;
+   white)
+      echo "#ffffff" > $LED
+      ;;
+   yellow)
+      echo "#ffff00" > $LED
+      ;;
    *)
-      echo "What?"
+      help
       ;;
 esac
 
