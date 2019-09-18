@@ -66,11 +66,11 @@ function stop_recording()
       $LOG "wait fail ($FAIL)"
     fi
 
-    chmod a+rw "$REC_DIR/$FNAME.mp3"
+    chmod a+rw "${REC_DIR}/$FNAME.mp3"
     FNAME=""
   fi
 
-  mv "$REC_DIR/*.mp3" "$UP_DIR/upload/*.mp3"
+  mv -f "${REC_DIR}"/*.mp3 "${UP_DIR}"
   # TODO: if more than UP_MAX_FILES in upload, then delete the oldest file
 
   $LED $OFF
