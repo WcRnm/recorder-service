@@ -17,17 +17,16 @@ LED=$RECHOME/led-ctl.bash
 
 source $RECHOME/rec-settings.conf
 
+# LED control colors
 ON=red
 OFF=green
 DISABLED=off
 
+FNAME=""
 escape_char=$(printf "\u1b")
 
-FNAME=""
+#--------------------------------------------------------
 
-mkdir -p $REC_DIR/upload
-
-$LOG "REC_DIR=$REC_DIR"
 
 function cleanup()
 {
@@ -70,16 +69,46 @@ function stop_recording()
     FNAME=""
   fi
 
-  mv -f "${REC_DIR}"/*.mp3 "${UP_DIR}"
-  # TODO: if more than UP_MAX_FILES in upload, then delete the oldest file
-
   $LED $OFF
-  $LOG "+----------------------------------------+"
-  $LOG "|---- PRESS A KEY TO START RECORDING ----|"
-  $LOG "+----------------------------------------+"
 }
 
-stop_recording
+function upload_tasks()
+{
+  # Move the mp3 file to the upload directory.
+  mv -f "${REC_DIR}"/*.mp3 "${UP_DIR}"
+
+  # Delete old recordings if there too many in the upload dir 
+  pushd "${UP_DIR}" >/dev/null
+    N=$((UP_MAX_FILES+1))
+    ls -tp | grep -v '/$' | tail -n +$N | xargs -I {} rm -- {}
+  popd >/dev/null
+}
+
+function message()
+{
+  $LOG "+----------------------------------------+"
+  if [ "$1" = "start" ]; then
+    $LOG "|     PRESS A KEY TO START RECORDING     |"
+  else
+    $LOG "|     PRESS A KEY TO STOP RECORDING      |"
+  fi
+  $LOG "+----------------------------------------+"
+}
+#--------------------------------------------------------
+
+# Log some current settings
+$LOG "VERSION=$VERSION"
+$LOG "REC_DIR=$REC_DIR"
+$LOG "UP_DIR=$UP_DIR"
+
+# Create directories if they don't exist
+mkdir -p $REC_DIR/upload
+mkdir -p $UP_DIR
+
+# Do the upload tasks. This is in case we had lost power during the last record session
+upload_tasks
+
+message start
 
 while read -rsn1 keypress; do
   if [[ $keypress == $escape_char ]]; then
@@ -89,9 +118,13 @@ while read -rsn1 keypress; do
   if [[ $recording = 0 ]]; then
     recording=1
     start_recording
+    sleep 0.5
+    message stop
   else
     recording=0
     stop_recording
+    upload_tasks
+    message start
   fi
 done
 
