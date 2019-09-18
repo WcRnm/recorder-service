@@ -46,7 +46,7 @@ function start_recording()
   $LOG "start: '$FNAME'"
   $LED $ON
 
-  arecord -D $MIC_DEV -f cd -c 2 -t raw | lame -r -b 128 - "$REC_DIR/$FNAME.mp3" &
+  arecord -D $MIC_DEV -f cd -c 2 -t raw | lame -r -b $MP4_BITRATE - "$REC_DIR/$FNAME.mp3" &
 }
 
 function stop_recording()
