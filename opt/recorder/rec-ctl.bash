@@ -97,9 +97,10 @@ function message()
 #--------------------------------------------------------
 
 # Log some current settings
-$LOG "VERSION=$VERSION"
-$LOG "REC_DIR=$REC_DIR"
-$LOG "UP_DIR=$UP_DIR"
+$LOG "VERSION           = $VERSION"
+$LOG "REC_DIR           = $REC_DIR"
+$LOG "UP_DIR            = $UP_DIR"
+$LOG "REC_MAX_DURATION  = $REC_MAX_DURATION"
 
 # Create directories if they don't exist
 mkdir -p $REC_DIR/upload
@@ -110,7 +111,7 @@ upload_tasks
 
 message start
 
-while read -rsn1 keypress; do
+while read -rsn1 -t $REC_MAX_DURATION keypress; do
   if [[ $keypress == $escape_char ]]; then
     read -rsn2 keypress # read 2 more chars
   fi
