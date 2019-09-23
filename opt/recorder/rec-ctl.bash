@@ -1,4 +1,5 @@
 #!/bin/bash
+VERSION="0.3"
 
 # Script to start/stop audio recording using a keypad
 #
@@ -10,7 +11,6 @@ LOG="logger -s -t rec-ctl[$BASHPID]"
 $LOG "This is a sound recorder appliance. Hit a key to start/stop recording."
 
 recording=0
-device=plughw:1,0
 
 RECHOME=/opt/recorder
 LED=$RECHOME/led-ctl.bash
@@ -27,6 +27,11 @@ escape_char=$(printf "\u1b")
 
 #--------------------------------------------------------
 
+function die()
+{
+  $LOG "FATAL line:$1 $2"
+  exit
+}
 
 function cleanup()
 {
@@ -45,7 +50,7 @@ function start_recording()
   $LOG "start: '$FNAME'"
   $LED $ON
 
-  arecord -D $MIC_DEV -f cd -c 2 -t raw | lame -r -b $MP4_BITRATE - "$REC_DIR/$FNAME.mp3" &
+  arecord -D "$MIC_DEV" -f cd -c 2 -t raw | lame -r -b "$MP4_BITRATE" - "$REC_DIR/$FNAME.mp3" &
 }
 
 function stop_recording()
@@ -55,10 +60,10 @@ function stop_recording()
     killall arecord
 
     FAIL=0
-    for job in `jobs -p`
+    for job in $(jobs -p)
     do
         $LOG "wait for job:$job"
-        wait $job || let "FAIL+=1"
+        wait "$job" || (( FAIL+=1 ))
     done
 
     if [ "$FAIL" != "0" ]; then
@@ -78,19 +83,21 @@ function upload_tasks()
   mv -f "${REC_DIR}"/*.mp3 "${UP_DIR}"
 
   # Delete old recordings if there too many in the upload dir 
-  pushd "${UP_DIR}" >/dev/null
+  pushd "${UP_DIR}" >/dev/null || exit
     N=$((UP_MAX_FILES+1))
     ls -tp | grep -v '/$' | tail -n +$N | xargs -I {} rm -- {}
-  popd >/dev/null
+  popd >/dev/null || exit
 }
 
 function message()
 {
   $LOG "+----------------------------------------+"
   if [ "$1" = "start" ]; then
-    $LOG "|     PRESS A KEY TO START RECORDING     |"
-  else
-    $LOG "|     PRESS A KEY TO STOP RECORDING      |"
+    $LOG "|     PRESS A KEY TO START RECORDING."
+  elif [ "$1" = "stop" ]; then
+    $LOG "|     PRESS A KEY TO STOP RECORDING."
+  elif [ "$1" = "timeout" ]; then
+    $LOG "|     TIMEOUT. MAX DURATION: $REC_MAX_DURATION sec."
   fi
   $LOG "+----------------------------------------+"
 }
@@ -103,17 +110,32 @@ $LOG "UP_DIR            = $UP_DIR"
 $LOG "REC_MAX_DURATION  = $REC_MAX_DURATION"
 
 # Create directories if they don't exist
-mkdir -p $REC_DIR/upload
-mkdir -p $UP_DIR
+mkdir -p "$REC_DIR"/upload
+mkdir -p "$UP_DIR"
 
 # Do the upload tasks. This is in case we had lost power during the last record session
 upload_tasks
 
 message start
 
-while read -rsn1 -t $REC_MAX_DURATION keypress; do
-  if [[ $keypress == $escape_char ]]; then
-    read -rsn2 keypress # read 2 more chars
+$LED $OFF
+
+while true; do
+  read -rsn1 -t "$REC_MAX_DURATION" keypress
+  
+  if [ "$?" != 0 ]; then
+    # timeout
+    if [ $recording = 0 ]; then
+      # timeout, but not recording, keep waiting...
+      continue
+    else
+      message timeout
+    fi
+  else
+    if [[ "$keypress" == "$escape_char" ]]; then
+      # read 2 more chars, this is arrow key (on a keypad)
+      read -rsn2 keypress || continue
+    fi
   fi
 
   if [[ $recording = 0 ]]; then

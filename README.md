@@ -22,6 +22,7 @@ These instructions are for a OrangePi running Raspian (Debian)
 ## Copy the service files to the target device
 
 Notes
+
 - Preserve executable permissions on the *.bash files
 
 /etc/systemd/system/*
