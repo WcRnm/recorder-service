@@ -14,6 +14,7 @@ recording=0
 
 RECHOME=/opt/recorder
 LED=$RECHOME/led-ctl.bash
+UPLOAD=$RECHOME/upload.bash
 
 source $RECHOME/rec-settings.conf
 
@@ -80,10 +81,12 @@ function stop_recording()
 function upload_tasks()
 {
   # Move the mp3 file to the upload directory.
-  mv -f "${REC_DIR}"/*.mp3 "${UP_DIR}"
+  mv -f "${REC_DIR}"/*.mp3 "${UP_PENDING}"
+
+  $UPLOAD "$UP_PENDING" "$UP_DEST"
 
   # Delete old recordings if there too many in the upload dir 
-  pushd "${UP_DIR}" >/dev/null || exit
+  pushd "${UP_PENDING}" >/dev/null || exit
     N=$((UP_MAX_FILES+1))
     ls -tp | grep -v '/$' | tail -n +$N | xargs -I {} rm -- {}
   popd >/dev/null || exit
@@ -106,12 +109,13 @@ function message()
 # Log some current settings
 $LOG "VERSION           = $VERSION"
 $LOG "REC_DIR           = $REC_DIR"
-$LOG "UP_DIR            = $UP_DIR"
+$LOG "UP_PENDING        = $UP_PENDING"
+$LOG "UP_DEST           = $UP_DEST"
 $LOG "REC_MAX_DURATION  = $REC_MAX_DURATION"
 
 # Create directories if they don't exist
 mkdir -p "$REC_DIR"/upload
-mkdir -p "$UP_DIR"
+mkdir -p "$UP_PENDING"
 
 # Do the upload tasks. This is in case we had lost power during the last record session
 upload_tasks
@@ -127,6 +131,7 @@ while true; do
     # timeout
     if [ $recording = 0 ]; then
       # timeout, but not recording, keep waiting...
+      upload_tasks
       continue
     else
       message timeout
