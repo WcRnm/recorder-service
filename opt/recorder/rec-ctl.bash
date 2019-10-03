@@ -80,8 +80,8 @@ function stop_recording()
 
 function upload_tasks()
 {
-  # Move the mp3 file to the upload directory.
-  mv -f "${REC_DIR}"/*.mp3 "${UP_PENDING}"
+  # Move mp3 files to the upload directory.
+  mv -f "${REC_DIR}"/*.mp3 "${UP_PENDING}" 2>/dev/null
 
   $UPLOAD "$UP_PENDING" "$UP_DEST"
 
