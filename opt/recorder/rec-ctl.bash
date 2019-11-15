@@ -2,6 +2,11 @@
 VERSION="0.5"
 DEBUG=0
 
+# ACTIVE BUTTONS
+#  Note: prefer to us keys that are not effected by the NumLock key.
+BTN_RECORD="+"
+BTN_PROJECTOR="*"
+
 # Script to start/stop audio recording using a keypad
 #
 #  1) Active recording is in REC_DIR
@@ -10,6 +15,7 @@ DEBUG=0
 LOG="logger -s -t rec-ctl[$BASHPID]"
 
 recording=0
+projecting=0
 
 RECHOME=/opt/recorder
 LED=$RECHOME/led-ctl.bash
@@ -102,11 +108,15 @@ function message()
 {
   $LOG "+----------------------------------------+"
   if [ "$1" = "start" ]; then
-    $LOG "|     PRESS A KEY TO START RECORDING."
+    $LOG "|     PRESS '${BTN_RECORD}' TO START RECORDING."
   elif [ "$1" = "stop" ]; then
-    $LOG "|     PRESS A KEY TO STOP RECORDING."
+    $LOG "|     PRESS '${BTN_RECORD}' TO STOP RECORDING."
   elif [ "$1" = "timeout" ]; then
     $LOG "|     TIMEOUT. MAX DURATION: $REC_MAX_DURATION sec."
+  elif [ "$1" = "proj_on" ]; then
+    $LOG "|     PRESS '${BTN_PROJECTOR}' TO TURN ON PROJECTOR. (TBD)"
+  elif [ "$1" = "proj_off" ]; then
+    $LOG "|     PRESS '${BTN_PROJECTOR}' TO TURN OFF PROJECTOR. (TBD)"
   fi
   $LOG "+----------------------------------------+"
 }
@@ -126,6 +136,7 @@ mkdir -p "$UP_PENDING"
 # Do the upload tasks. This is in case we had lost power during the last record session
 upload_tasks
 
+message "proj_on"
 message "start"
 
 $LED $OFF
@@ -154,18 +165,30 @@ while true; do
 
   DBG "key: '$keypress'"
 
-  if [[ $recording = 0 ]]; then
-    DBG "RECORD ON"
-    recording=1
-    start_recording
-    sleep 0.5
-    message "stop"
-  else
-    DBG "RECORD OFF"
-    recording=0
-    stop_recording
-    upload_tasks
-    message "start"
+  if [[ "$BTN_RECORD" = "$keypress" ]]; then
+    DBG "record button"
+    if [[ $recording = 0 ]]; then
+      DBG "RECORD ON"
+      recording=1
+      start_recording
+      sleep 0.5
+      message "stop"
+    else
+      DBG "RECORD OFF"
+      recording=0
+      stop_recording
+      upload_tasks
+      message "start"
+    fi
+  elif [[ "$BTN_PROJECTOR" = "$keypress" ]]; then
+    DBG "projector button"
+    if [[ $projecting = 0 ]]; then
+      DBG "PROJECTOR ON (TBD)"
+      projecting=1
+    else
+      DBG "PROJECTOR OFF (TBD)"
+      projecting=0
+    fi
   fi
 done
 
