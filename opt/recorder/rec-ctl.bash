@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.5"
+VERSION="0.6"
 DEBUG=0
 
 # ACTIVE BUTTONS
