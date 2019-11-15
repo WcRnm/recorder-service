@@ -1,5 +1,6 @@
 #!/bin/bash
 VERSION="0.5"
+DEBUG=0
 
 # Script to start/stop audio recording using a keypad
 #
@@ -7,8 +8,6 @@ VERSION="0.5"
 #  2) Recordings ready for upload are in UP_DIR
 
 LOG="logger -s -t rec-ctl[$BASHPID]"
-
-$LOG "This is a sound recorder appliance. Hit a key to start/stop recording."
 
 recording=0
 
@@ -27,6 +26,13 @@ FNAME=""
 escape_char=$(printf "\u1b")
 
 #--------------------------------------------------------
+
+function DBG()
+{
+  if [[ "$DEBUG" = "1" ]]; then
+    $LOG "DBG: $1"
+  fi
+}
 
 function die()
 {
@@ -120,39 +126,46 @@ mkdir -p "$UP_PENDING"
 # Do the upload tasks. This is in case we had lost power during the last record session
 upload_tasks
 
-message start
+message "start"
 
 $LED $OFF
 
 while true; do
+  DBG "read..."
   read -rsn1 -t "$REC_MAX_DURATION" keypress
   
   if [ "$?" != 0 ]; then
+    DBG "timeout..."
     # timeout
     if [ $recording = 0 ]; then
       # timeout, but not recording, keep waiting...
       upload_tasks
       continue
     else
-      message timeout
+      message "timeout"
     fi
   else
     if [[ "$keypress" == "$escape_char" ]]; then
+      DBG "escape"
       # read 2 more chars, this is arrow key (on a keypad)
       read -rsn2 keypress || continue
     fi
   fi
 
+  DBG "key: '$keypress'"
+
   if [[ $recording = 0 ]]; then
+    DBG "RECORD ON"
     recording=1
     start_recording
     sleep 0.5
-    message stop
+    message "stop"
   else
+    DBG "RECORD OFF"
     recording=0
     stop_recording
     upload_tasks
-    message start
+    message "start"
   fi
 done
 
