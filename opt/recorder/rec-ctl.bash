@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.4"
+VERSION="0.5"
 
 # Script to start/stop audio recording using a keypad
 #
