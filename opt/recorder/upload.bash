@@ -22,5 +22,6 @@ do
 
   # TODO: This will only work if the destination is a directory.
   #       Consider adding support for other upload methods.
-  mv "$f" "$DST"
+  $LOG "rsync -a --remove-source-files $f $DST"
+  rsync -a --remove-source-files "$f" "$DST"
 done
