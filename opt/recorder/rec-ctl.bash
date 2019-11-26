@@ -95,9 +95,11 @@ function upload_tasks()
   # Move mp3 files to the upload directory.
   mv -f "${REC_DIR}"/*.mp3 "${UP_PENDING}" 2>/dev/null
 
+  $LOG "Uploading $UP_PENDING $UP_DEST"
   $UPLOAD "$UP_PENDING" "$UP_DEST"
 
   # Delete old recordings if there too many in the upload dir 
+  $LOG "Removing old files from $UP_PENDING"
   pushd "${UP_PENDING}" >/dev/null || exit
     N=$((UP_MAX_FILES+1))
     ls -tp | grep -v '/$' | tail -n +$N | xargs -I {} rm -- {}
