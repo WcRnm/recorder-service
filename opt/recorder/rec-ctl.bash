@@ -4,7 +4,8 @@ DEBUG=0
 
 # ACTIVE BUTTONS
 #  Note: prefer to us keys that are not effected by the NumLock key.
-BTN_RECORD="+"
+BTN_RECORD_START="+"
+BTN_RECORD_STOP="-"
 BTN_PROJECTOR="*"
 
 # Script to start/stop audio recording using a keypad
@@ -110,9 +111,9 @@ function message()
 {
   $LOG "+----------------------------------------+"
   if [ "$1" = "start" ]; then
-    $LOG "|     PRESS '${BTN_RECORD}' TO START RECORDING."
+    $LOG "|     PRESS '${BTN_RECORD_START}' TO START RECORDING."
   elif [ "$1" = "stop" ]; then
-    $LOG "|     PRESS '${BTN_RECORD}' TO STOP RECORDING."
+    $LOG "|     PRESS '${BTN_RECORD_STOP}' TO STOP RECORDING."
   elif [ "$1" = "timeout" ]; then
     $LOG "|     TIMEOUT. MAX DURATION: $REC_MAX_DURATION sec."
   elif [ "$1" = "proj_on" ]; then
@@ -167,15 +168,18 @@ while true; do
 
   DBG "key: '$keypress'"
 
-  if [[ "$BTN_RECORD" = "$keypress" ]]; then
-    DBG "record button"
+  if [[ "$BTN_RECORD_START" = "$keypress" ]]; then
+    DBG "record on button"
     if [[ $recording = 0 ]]; then
       DBG "RECORD ON"
       recording=1
       start_recording
       sleep 0.5
       message "stop"
-    else
+    fi
+  elif [[ "$BTN_RECORD_STOP" = "$keypress" ]]; then
+    DBG "record off button"
+    if [[ $recording = 1 ]]; then
       DBG "RECORD OFF"
       recording=0
       stop_recording
