@@ -139,7 +139,7 @@ mkdir -p "$UP_PENDING"
 # Do the upload tasks. This is in case we had lost power during the last record session
 upload_tasks
 
-message "proj_on"
+# message "proj_on"
 message "start"
 
 $LED $OFF
