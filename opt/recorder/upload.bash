@@ -14,6 +14,7 @@ function die()
 
 [ -d "$SRC" ] || die "SRC does not exist: $SRC"
 [ -d "$DST" ] || die "DST does not exist: $DST"
+[ mountpoint "$DST" ] || die "DST is not mounted: $DST"
 
 FILES="$SRC/*.mp3"
 for f in $FILES
