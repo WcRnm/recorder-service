@@ -5,8 +5,8 @@ DEBUG=0
 # ACTIVE BUTTONS
 #  Note: prefer to us keys that are not effected by the NumLock key.
 BTN_RECORD_START="+"
-BTN_RECORD_STOP="-"
-BTN_PROJECTOR="*"
+BTN_RECORD_STOP="*"
+BTN_PROJECTOR="-"
 
 # Script to start/stop audio recording using a keypad
 #
